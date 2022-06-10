@@ -23,17 +23,19 @@ pub async fn run() {
     
     let mut last_render_time = instant::Instant::now();
     
+    let mut input_controller = input::Input::new();
+    
     event_loop.run(move |event, _, control_flow| {
         match event {
             Event::WindowEvent {
                 ref event,
                 window_id,
             } => {
-                let (found_key, key, state) = input::try_get_key(event);
+                let found_key = input_controller.process_input_event(event);
                 if (found_key) {
-                    renderer_state.camera_controller.process_keyboard(key.unwrap(), state.unwrap());
+                    renderer_state.camera_controller.process_input(&input_controller);
                 }
-                if window_id == window.id() && !found_key {
+                if window_id == window.id() {
                     match event {
                         WindowEvent::CloseRequested
                         | WindowEvent::KeyboardInput {

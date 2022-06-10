@@ -3,6 +3,8 @@ use winit::event::*;
 use winit::dpi::PhysicalPosition;
 use instant::Duration;
 
+use crate::input;
+
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
     1.0, 0.0, 0.0, 0.0,
@@ -59,7 +61,6 @@ impl Projection {
     }
     
     pub fn resize(&mut self, width: u32, height: u32) {
-        // TODO: Do I need to update width and height as well? Or does rust do that with this syntax?
         self.aspect = width as f32 / height as f32;
     }
     
@@ -82,35 +83,33 @@ impl CameraController {
         }
     }
     
-    pub fn process_keyboard(&mut self, key: VirtualKeyCode, state: ElementState) -> bool {
-        let amount = if state == ElementState::Pressed {1.0} else {0.0};
-        match key {
-            VirtualKeyCode::W | VirtualKeyCode::Up => {
-                self.velocity.y = amount * self.speed;
-                true
-            }
-            VirtualKeyCode::S | VirtualKeyCode::Down => {
-                self.velocity.y = -amount * self.speed;
-                true
-            }
-            VirtualKeyCode::A | VirtualKeyCode::Left => {
-                self.velocity.x = -amount * self.speed;
-                true
-            }
-            VirtualKeyCode::D | VirtualKeyCode::Right => {
-                self.velocity.x = amount * self.speed;
-                true
-            }
-            VirtualKeyCode::Q => {
-                self.velocity.z = -amount * self.speed;
-                true
-            }
-            VirtualKeyCode::E => {
-                self.velocity.z = amount * self.speed;
-                true
-            }
-            _ => false,
+    pub fn process_input(&mut self, input_controller: &input::Input) {
+        if input_controller.move_up {
+            self.velocity.y = 1f32;
         }
+        else if input_controller.move_down {
+            self.velocity.y = -1f32;
+        }
+        else {
+            self.velocity.y = 0f32;
+        }
+        
+        if input_controller.move_left {
+            self.velocity.x = -1f32;
+        }
+        else if input_controller.move_right {
+            self.velocity.x = 1f32;
+        }
+        else {
+            self.velocity.x = 0f32;
+        }
+        
+        if self.velocity.x == 0f32 && self.velocity.y == 0f32 {
+            return;
+        }
+        
+        self.velocity = self.velocity.normalize();
+        self.velocity *= self.speed;
     }
     
     pub fn update_camera(&mut self, camera: &mut Camera, dt: Duration) {
