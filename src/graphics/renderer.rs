@@ -1,14 +1,8 @@
 use winit::{
-    event::*,
-    event_loop::{ControlFlow, EventLoop},
-    window::WindowBuilder,
     window::Window,
-    dpi::PhysicalPosition,
 };
 
-use wgpu::include_wgsl;
 use wgpu::util::DeviceExt;
-use cgmath::prelude::*;
 
 use crate::graphics::camera;
 use crate::graphics::model;
@@ -89,14 +83,14 @@ fn create_render_pipeline(
     })
 }
 
-const VERTICES: &[model::ModelVertex] = &[
+const SQUARE_VERTICES: &[model::ModelVertex] = &[
     model::ModelVertex { position: [-1.0, 1.0, 0.0] },
     model::ModelVertex { position: [-1.0, -1.0, 0.0] },
     model::ModelVertex { position: [1.0, -1.0, 0.0] },
     model::ModelVertex { position: [1.0, 1.0, 0.0] },
 ];
 
-const INDICES: &[u16] = &[
+const SQUARE_INDICES: &[u16] = &[
     0, 1, 2,
     2, 3, 0,
 ];
@@ -226,14 +220,14 @@ impl State {
         let vertex_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(VERTICES),
+                contents: bytemuck::cast_slice(SQUARE_VERTICES),
                 usage: wgpu::BufferUsages::VERTEX,
             }
         );
         let index_buffer = device.create_buffer_init(
             &wgpu::util::BufferInitDescriptor {
                 label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(INDICES),
+                contents: bytemuck::cast_slice(SQUARE_INDICES),
                 usage: wgpu::BufferUsages::INDEX,
             }
         );
@@ -246,7 +240,7 @@ impl State {
             name: "Temp Model".to_string(),
             vertex_buffer: vertex_buffer,
             index_buffer: index_buffer,
-            num_elements: INDICES.len() as u32,
+            num_elements: SQUARE_INDICES.len() as u32,
             material: material,
         };
         

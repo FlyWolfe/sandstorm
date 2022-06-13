@@ -2,8 +2,6 @@ use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
     window::WindowBuilder,
-    window::Window,
-    dpi::PhysicalPosition,
 };
 
 use crate::graphics;
