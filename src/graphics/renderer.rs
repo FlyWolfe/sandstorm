@@ -1,3 +1,5 @@
+use cgmath::Vector2;
+use wgpu::Color;
 use winit::{
     window::Window,
 };
@@ -5,6 +7,7 @@ use winit::{
 use wgpu::util::DeviceExt;
 
 use crate::graphics::camera;
+use crate::graphics::sprite;
 use crate::graphics::model;
 
 use super::model::DrawModel;
@@ -83,18 +86,6 @@ fn create_render_pipeline(
     })
 }
 
-const SQUARE_VERTICES: &[model::ModelVertex] = &[
-    model::ModelVertex { position: [-1.0, 1.0, 0.0] },
-    model::ModelVertex { position: [-1.0, -1.0, 0.0] },
-    model::ModelVertex { position: [1.0, -1.0, 0.0] },
-    model::ModelVertex { position: [1.0, 1.0, 0.0] },
-];
-
-const SQUARE_INDICES: &[u16] = &[
-    0, 1, 2,
-    2, 3, 0,
-];
-
 pub struct State {
     surface: wgpu::Surface,
     device: wgpu::Device,
@@ -109,7 +100,7 @@ pub struct State {
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
-    model: model::Model,
+    sprites: Vec<sprite::Sprite>,
 }
 
 impl State {
@@ -151,7 +142,7 @@ impl State {
             a: 1.0,
         };
         
-        let camera = camera::Camera::new((0.0, 0.0, 4.0));
+        let camera = camera::Camera::new((0.0, 0.0, 10.0));
         let projection = camera::Projection::new(config.width, config.height, cgmath::Deg(45.0), 0.1, 100.0);
         let camera_controller = camera::CameraController::new(5.0);
         
@@ -217,32 +208,18 @@ impl State {
             )
         };
         
-        let vertex_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Vertex Buffer"),
-                contents: bytemuck::cast_slice(SQUARE_VERTICES),
-                usage: wgpu::BufferUsages::VERTEX,
-            }
-        );
-        let index_buffer = device.create_buffer_init(
-            &wgpu::util::BufferInitDescriptor {
-                label: Some("Index Buffer"),
-                contents: bytemuck::cast_slice(SQUARE_INDICES),
-                usage: wgpu::BufferUsages::INDEX,
-            }
-        );
+        let mut sprites = Vec::new();
+        let sprite1 = sprite::Sprite::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0), Color {r: 1.0, g: 1.0, b: 1.0, a: 1.0}, &device);
+        let sprite2 = sprite::Sprite::new(Vector2::new(-2.0, 0.0), Vector2::new(1.0, 2.0), Color {r: 1.0, g: 1.0, b: 1.0, a: 1.0}, &device);
+        let sprite3 = sprite::Sprite::new(Vector2::new(2.0, 0.0), Vector2::new(1.0, 4.0), Color {r: 1.0, g: 1.0, b: 1.0, a: 1.0}, &device);
+        let sprite4 = sprite::Sprite::new(Vector2::new(0.0, 2.0), Vector2::new(5.0, 1.0), Color {r: 1.0, g: 1.0, b: 1.0, a: 1.0}, &device);
+        let sprite5 = sprite::Sprite::new(Vector2::new(0.0, -2.0), Vector2::new(0.5, 1.0), Color {r: 1.0, g: 1.0, b: 1.0, a: 1.0}, &device);
         
-        let material = model::Material {
-            name: "Temp Material".to_string(),
-            color: wgpu::Color { r: 1.0, g: 0.0, b: 0.0, a: 1.0 },
-        };
-        let model = model::Model {
-            name: "Temp Model".to_string(),
-            vertex_buffer: vertex_buffer,
-            index_buffer: index_buffer,
-            num_elements: SQUARE_INDICES.len() as u32,
-            material: material,
-        };
+        sprites.push(sprite1);
+        sprites.push(sprite2);
+        sprites.push(sprite3);
+        sprites.push(sprite4);
+        sprites.push(sprite5);
         
         Self {
             surface,
@@ -258,7 +235,7 @@ impl State {
             camera_uniform,
             camera_buffer,
             camera_bind_group,
-            model,
+            sprites,
         }
     }
     
@@ -302,10 +279,9 @@ impl State {
             });
             
             render_pass.set_pipeline(&self.render_pipeline);
-            render_pass.draw_model(
-                &self.model,
-                &self.camera_bind_group,
-            );
+            self.sprites.iter().for_each(|sprite| {
+                render_pass.draw_model(&sprite.model, &self.camera_bind_group);
+            });
         }
     
         // submit will accept anything that implements IntoIter

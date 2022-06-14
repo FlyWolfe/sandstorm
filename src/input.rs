@@ -1,11 +1,11 @@
 pub mod input;
 pub mod controller;
 
+use cgmath::Vector2;
 use winit::event::{WindowEvent, KeyboardInput, VirtualKeyCode, ElementState};
-use crate::math::vector;
 
 pub struct Input {
-    pub mouse_position: vector::Vector2,
+    pub mouse_position: Vector2<f32>,
     pub move_up: bool,
     pub move_down: bool,
     pub move_left: bool,
@@ -16,7 +16,7 @@ pub struct Input {
 impl Input {
     pub fn new() -> Self {
         Self {
-            mouse_position: vector::Vector2::zero(),
+            mouse_position: Vector2::new(0.0, 0.0),
             move_up: false,
             move_down: false,
             move_left: false,
@@ -84,7 +84,7 @@ impl Input {
         }
     }
     
-    pub fn get_mouse_position(&self) -> vector::Vector2 {
+    pub fn get_mouse_position(&self) -> Vector2<f32> {
         return self.mouse_position;
     }
 }

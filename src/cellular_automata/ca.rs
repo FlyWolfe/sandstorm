@@ -1,4 +1,5 @@
-use crate::{math::vector::Vector2, graphics::color::Color};
+use cgmath::Vector2;
+use wgpu::Color;
 
 pub enum ParticleType {
     Sand,
@@ -22,13 +23,13 @@ impl Cell {
 
 pub struct Chunk {
     cells: Vec<Cell>,
-    position: Vector2,
+    position: Vector2<f32>,
     width: i32,
     height: i32,
 }
 
 impl Chunk {
-    pub fn new(cells: Vec<Cell>, position: Vector2, width: i32, height: i32) -> Self {
+    pub fn new(cells: Vec<Cell>, position: Vector2<f32>, width: i32, height: i32) -> Self {
         Self {
             cells,
             position,
