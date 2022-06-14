@@ -1,5 +1,9 @@
 use cgmath::Vector2;
 use cgmath::Vector3;
+use cgmath::num_traits::Pow;
+use cgmath::num_traits::ToPrimitive;
+use wgpu::Buffer;
+use wgpu::BufferBinding;
 use wgpu::Color;
 use wgpu::util::DeviceExt;
 
@@ -35,11 +39,18 @@ impl Sprite {
             }
         }
         
+        let color_array = [
+            color.r.to_f32().unwrap().pow(2.2),
+            color.g.to_f32().unwrap().pow(2.2),
+            color.b.to_f32().unwrap().pow(2.2),
+            color.a.to_f32().unwrap().pow(2.2),
+        ];
+        
         let verts: &[model::ModelVertex] = &[
-            model::ModelVertex { position: square_verts[0].into() },
-            model::ModelVertex { position: square_verts[1].into() },
-            model::ModelVertex { position: square_verts[2].into() },
-            model::ModelVertex { position: square_verts[3].into() },
+            model::ModelVertex { position: square_verts[0].into(), color: color_array },
+            model::ModelVertex { position: square_verts[1].into(), color: color_array },
+            model::ModelVertex { position: square_verts[2].into(), color: color_array },
+            model::ModelVertex { position: square_verts[3].into(), color: color_array },
         ];
         
         let vertex_buffer = device.create_buffer_init(
