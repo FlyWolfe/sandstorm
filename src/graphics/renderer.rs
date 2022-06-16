@@ -7,10 +7,7 @@ use winit::{
 use wgpu::util::DeviceExt;
 
 use crate::graphics::camera;
-use crate::graphics::sprite;
-use crate::graphics::model;
-
-use super::model::DrawModel;
+use crate::graphics::mesh;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -100,7 +97,6 @@ pub struct RenderState {
     camera_uniform: CameraUniform,
     camera_buffer: wgpu::Buffer,
     camera_bind_group: wgpu::BindGroup,
-    sprites: Vec<sprite::Sprite>,
 }
 
 impl RenderState {
@@ -220,25 +216,10 @@ impl RenderState {
                 &device,
                 &render_pipeline_layout,
                 config.format,
-                &[<model::ModelVertex as model::Vertex>::desc()],
+                &[<mesh::MeshVertex as mesh::Vertex>::desc()],
                 shader,
             )
         };
-        
-        let blue = Color {r: 0.4, g: 0.7, b: 0.8, a: 1.0};
-        let grey = Color {r: 0.6, g: 0.8, b: 0.6, a: 1.0};
-        let mut sprites = Vec::new();
-        let sprite1 = sprite::Sprite::new(Vector2::new(0.0, 0.0), Vector2::new(1.0, 1.0), blue, &device);
-        let sprite2 = sprite::Sprite::new(Vector2::new(-2.0, 0.0), Vector2::new(1.0, 2.0), grey, &device);
-        let sprite3 = sprite::Sprite::new(Vector2::new(2.0, 0.0), Vector2::new(1.0, 4.0), grey, &device);
-        let sprite4 = sprite::Sprite::new(Vector2::new(0.0, 2.0), Vector2::new(5.0, 1.0), grey, &device);
-        let sprite5 = sprite::Sprite::new(Vector2::new(0.0, -2.0), Vector2::new(0.5, 1.0), grey, &device);
-        
-        sprites.push(sprite1);
-        sprites.push(sprite2);
-        sprites.push(sprite3);
-        sprites.push(sprite4);
-        sprites.push(sprite5);
         
         Self {
             surface,
@@ -254,7 +235,6 @@ impl RenderState {
             camera_uniform,
             camera_buffer,
             camera_bind_group,
-            sprites,
         }
     }
     
@@ -298,9 +278,9 @@ impl RenderState {
             });
             
             render_pass.set_pipeline(&self.render_pipeline);
-            self.sprites.iter().for_each(|sprite| {
+            /*self.sprites.iter().for_each(|sprite| {
                 render_pass.draw_model(&sprite.model, &self.camera_bind_group);
-            });
+            });*/
         }
     
         // submit will accept anything that implements IntoIter

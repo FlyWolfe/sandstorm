@@ -1,39 +1,53 @@
 use cgmath::Vector2;
-use cgmath::Vector3;
 use cgmath::num_traits::Pow;
 use cgmath::num_traits::ToPrimitive;
-use wgpu::Color;
+use wgpu::Device;
 use wgpu::util::DeviceExt;
 
+use super::material::ColorUniform;
+use super::material::Material;
+use super::mesh::Mesh;
 use super::square;
-use super::model;
-
-#[repr(C)]
-#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
-struct ColorUniform {
-    value: [f32; 4],
-}
+use super::mesh;
 
 pub struct Sprite {
     //texture: Option<Texture>,
     pub position: Vector2<f32>,
     pub scale: Vector2<f32>,
-    pub color: Color,
-    pub model: model::Model,
+    pub material: Material,
 }
 
-impl Sprite {
-    pub fn new(position: Vector2<f32>, scale: Vector2<f32>, color: Color, device: &wgpu::Device) -> Self {
+pub trait DrawSprite<'a> {
+    fn draw_sprite(
+        &mut self,
+        device: Device,
+        sprite: &'a Sprite,
+        mesh: &'a mut Mesh,
+        camera_bind_group: &'a wgpu::BindGroup,
+    );
+}
+
+impl<'a, 'b> DrawSprite<'b> for wgpu::RenderPass<'a>
+where
+    'b: 'a,
+{
+    fn draw_sprite(
+        &mut self,
+        device: Device,
+        sprite: &'b Sprite,
+        mesh: &'b mut Mesh,
+        camera_bind_group: &'b wgpu::BindGroup,
+    ) {
         let mut square_verts = vec![
-            Vector3 { x: -0.5, y: 0.5, z: 0.0 },
-            Vector3 { x: -0.5, y: -0.5, z: 0.0 },
-            Vector3 { x: 0.5, y: -0.5, z: 0.0 },
-            Vector3 { x: 0.5, y: 0.5, z: 0.0 },
+            square::SQUARE_VERTS[0],
+            square::SQUARE_VERTS[1],
+            square::SQUARE_VERTS[2],
+            square::SQUARE_VERTS[3],
         ];
         
         for i in 0..square_verts.len() {
-            let x = (square_verts[i].x * scale.x) + position.x;
-            let y = (square_verts[i].y * scale.y) + position.y;
+            let x = (square_verts[i].x * sprite.scale.x) + sprite.position.x;
+            let y = (square_verts[i].y * sprite.scale.y) + sprite.position.y;
             {
                 let vert = &mut square_verts[i];
                 vert.x = x;
@@ -41,12 +55,11 @@ impl Sprite {
             }
         }
         
-        
         let color_array = [
-            color.r.to_f32().unwrap().pow(2.2),
-            color.g.to_f32().unwrap().pow(2.2),
-            color.b.to_f32().unwrap().pow(2.2),
-            color.a.to_f32().unwrap().pow(2.2),
+            sprite.material.color.r.to_f32().unwrap().pow(2.2),
+            sprite.material.color.g.to_f32().unwrap().pow(2.2),
+            sprite.material.color.b.to_f32().unwrap().pow(2.2),
+            sprite.material.color.a.to_f32().unwrap().pow(2.2),
         ];
         
         
@@ -87,11 +100,11 @@ impl Sprite {
             label: Some("color_bind_group"),
         });
         
-        let verts: &[model::ModelVertex] = &[
-            model::ModelVertex { position: square_verts[0].into() },
-            model::ModelVertex { position: square_verts[1].into() },
-            model::ModelVertex { position: square_verts[2].into() },
-            model::ModelVertex { position: square_verts[3].into() },
+        let verts: &[mesh::MeshVertex] = &[
+            mesh::MeshVertex { position: square_verts[0].into() },
+            mesh::MeshVertex { position: square_verts[1].into() },
+            mesh::MeshVertex { position: square_verts[2].into() },
+            mesh::MeshVertex { position: square_verts[3].into() },
         ];
         
         let vertex_buffer = device.create_buffer_init(
@@ -109,25 +122,21 @@ impl Sprite {
             }
         );
         
-        let material = model::Material {
-            name: "Temp Material".to_string(),
-            color: color,
-            color_bind_group: color_bind_group,
-        };
+        mesh.vertex_buffer = vertex_buffer;
+        mesh.index_buffer = index_buffer;
+        mesh.bind_groups = vec![
+            color_bind_group,
+        ];
         
-        let model = model::Model {
-            name: "Temp Model".to_string(),
-            vertex_buffer: vertex_buffer,
-            index_buffer: index_buffer,
-            num_elements: square::SQUARE_INDICES.len() as u32,
-            material: material,
-        };
         
-        Self {
-            position,
-            scale,
-            color,
-            model,
+        self.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
+        self.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        self.set_bind_group(0, camera_bind_group, &[]);
+        let mut i = 0;
+        for bind_group in &mesh.bind_groups {
+            i += 1;
+            self.set_bind_group(i, bind_group, &[]);
         }
+        self.draw_indexed(0..square::SQUARE_INDICES.len() as u32, 0, 0..1);
     }
 }

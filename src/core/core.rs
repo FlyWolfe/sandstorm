@@ -7,11 +7,6 @@ use winit::{
 use crate::graphics::{renderer, camera};
 use crate::input;
 
-pub struct GameState {
-    pub render_state: renderer::RenderState,
-    pub camera: camera::Camera,
-}
-
 pub fn start() {
     pollster::block_on(run());
 }
@@ -22,10 +17,8 @@ pub async fn run() {
     let event_loop = EventLoop::new();
     let window = WindowBuilder::new().build(&event_loop).unwrap();
     
-    let render_state = renderer::RenderState::new(&window).await;
-    let camera = camera::Camera::new((0.0, 0.0, 10.0));
-    
-    let mut game_state = GameState { render_state, camera };
+    let mut render_state = renderer::RenderState::new(&window).await;
+    let mut camera = camera::Camera::new((0.0, 0.0, 10.0));
     
     let mut last_render_time = instant::Instant::now();
     
@@ -39,7 +32,7 @@ pub async fn run() {
             } => {
                 let found_key = input_controller.process_input_event(event);
                 if found_key {
-                    game_state.render_state.camera_controller.process_input(&input_controller);
+                    render_state.camera_controller.process_input(&input_controller);
                 }
                 if window_id == window.id() {
                     match event {
@@ -54,10 +47,10 @@ pub async fn run() {
                             ..
                         } => *control_flow = ControlFlow::Exit,
                         WindowEvent::Resized(physical_size) => {
-                            game_state.render_state.resize(*physical_size);
+                            render_state.resize(*physical_size);
                         }
                         WindowEvent::ScaleFactorChanged { new_inner_size, .. } => {
-                            game_state.render_state.resize(**new_inner_size);
+                            render_state.resize(**new_inner_size);
                         }
                         _ => {}
                     }
@@ -67,10 +60,10 @@ pub async fn run() {
                 let now = instant::Instant::now();
                 let dt = now - last_render_time;
                 last_render_time = now;
-                game_state.render_state.update(dt);
-                match game_state.render_state.render() {
+                render_state.update(dt);
+                match render_state.render() {
                     Ok(_) => {}
-                    Err(wgpu::SurfaceError::Lost) => game_state.render_state.resize(game_state.render_state.size),
+                    Err(wgpu::SurfaceError::Lost) => render_state.resize(render_state.size),
                     Err(wgpu::SurfaceError::OutOfMemory) => *control_flow = ControlFlow::Exit,
                     Err(e) => eprintln!("{:?}", e),
                 }
