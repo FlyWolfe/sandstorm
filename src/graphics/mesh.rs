@@ -1,4 +1,6 @@
-use super::material::Material;
+use wgpu::{Device, util::DeviceExt, Color};
+
+use super::{material::Material, square};
 
 pub trait Vertex {
     fn desc<'a>() -> wgpu::VertexBufferLayout<'a>;
@@ -39,6 +41,37 @@ pub struct Mesh {
     pub num_elements: u32,
     pub material: Material,
     pub bind_groups: Vec<wgpu::BindGroup>,
+}
+
+impl Mesh {
+    pub fn empty(device: &Device) -> Self {
+        let verts: &[MeshVertex] = &[];
+        let vertex_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Vertex Buffer"),
+                contents: bytemuck::cast_slice(verts),
+                usage: wgpu::BufferUsages::VERTEX,
+            }
+        );
+        let index_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Index Buffer"),
+                contents: bytemuck::cast_slice(square::SQUARE_INDICES),
+                usage: wgpu::BufferUsages::INDEX,
+            }
+        );
+        
+        let material = Material {name: "empty mesh".to_string(), color: Color::WHITE};
+        
+        Self {
+            name: "empty mesh".to_string(),
+            vertex_buffer: vertex_buffer,
+            index_buffer: index_buffer,
+            num_elements: 0,
+            material: material,
+            bind_groups: vec![],
+        }
+    }
 }
 
 pub trait DrawMesh<'a> {
