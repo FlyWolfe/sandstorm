@@ -6,7 +6,6 @@ pub trait Vertex {
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct ModelVertex {
     pub position: [f32; 3],
-    pub color: [f32; 4],
 }
 
 impl Vertex for ModelVertex {
@@ -34,6 +33,7 @@ impl Vertex for ModelVertex {
 pub struct Material {
     pub name: String,
     pub color: wgpu::Color,
+    pub color_bind_group : wgpu::BindGroup,
 }
 
 pub struct Model {
@@ -64,6 +64,7 @@ where
         self.set_vertex_buffer(0, model.vertex_buffer.slice(..));
         self.set_index_buffer(model.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
         self.set_bind_group(0, camera_bind_group, &[]);
+        self.set_bind_group(1, &model.material.color_bind_group, &[]);
         self.draw_indexed(0..model.num_elements, 0, 0..1);
     }
 }

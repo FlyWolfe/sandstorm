@@ -2,15 +2,17 @@ use cgmath::Vector2;
 use cgmath::Vector3;
 use cgmath::num_traits::Pow;
 use cgmath::num_traits::ToPrimitive;
-use wgpu::Buffer;
-use wgpu::BufferBinding;
 use wgpu::Color;
 use wgpu::util::DeviceExt;
 
-use super::model::DrawModel;
-use super::texture::Texture;
 use super::square;
 use super::model;
+
+#[repr(C)]
+#[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
+struct ColorUniform {
+    value: [f32; 4],
+}
 
 pub struct Sprite {
     //texture: Option<Texture>,
@@ -39,6 +41,7 @@ impl Sprite {
             }
         }
         
+        
         let color_array = [
             color.r.to_f32().unwrap().pow(2.2),
             color.g.to_f32().unwrap().pow(2.2),
@@ -46,11 +49,49 @@ impl Sprite {
             color.a.to_f32().unwrap().pow(2.2),
         ];
         
+        
+        let color_uniform = ColorUniform { value: color_array };
+        
+        let color_buffer = device.create_buffer_init(
+            &wgpu::util::BufferInitDescriptor {
+                label: Some("Camera Buffer"),
+                contents: bytemuck::cast_slice(&[color_uniform]),
+                usage: wgpu::BufferUsages::UNIFORM,
+            }
+        );
+        
+        let color_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }
+            ],
+            label: Some("colors_bind_group_layout"),
+        });
+        
+        let color_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &color_bind_group_layout,
+            entries: &[
+                wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: color_buffer.as_entire_binding(),
+                }
+            ],
+            label: Some("color_bind_group"),
+        });
+        
         let verts: &[model::ModelVertex] = &[
-            model::ModelVertex { position: square_verts[0].into(), color: color_array },
-            model::ModelVertex { position: square_verts[1].into(), color: color_array },
-            model::ModelVertex { position: square_verts[2].into(), color: color_array },
-            model::ModelVertex { position: square_verts[3].into(), color: color_array },
+            model::ModelVertex { position: square_verts[0].into() },
+            model::ModelVertex { position: square_verts[1].into() },
+            model::ModelVertex { position: square_verts[2].into() },
+            model::ModelVertex { position: square_verts[3].into() },
         ];
         
         let vertex_buffer = device.create_buffer_init(
@@ -71,6 +112,7 @@ impl Sprite {
         let material = model::Material {
             name: "Temp Material".to_string(),
             color: color,
+            color_bind_group: color_bind_group,
         };
         
         let model = model::Model {

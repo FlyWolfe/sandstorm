@@ -86,7 +86,7 @@ fn create_render_pipeline(
     })
 }
 
-pub struct State {
+pub struct RenderState {
     surface: wgpu::Surface,
     device: wgpu::Device,
     queue: wgpu::Queue,
@@ -103,7 +103,7 @@ pub struct State {
     sprites: Vec<sprite::Sprite>,
 }
 
-impl State {
+impl RenderState {
     pub async fn new(window: &Window) -> Self {
         let size = window.inner_size();
         
@@ -184,11 +184,28 @@ impl State {
             label: Some("camera_bind_group"),
         });
         
+        let color_bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            entries: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }
+            ],
+            label: Some("colors_bind_group_layout"),
+        });
+        
         let render_pipeline_layout = device.create_pipeline_layout(
             &wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
                 bind_group_layouts: &[
                 &camera_bind_group_layout,
+                &color_bind_group_layout,
             ],
                 push_constant_ranges: &[],
             }

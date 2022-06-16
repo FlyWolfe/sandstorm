@@ -1,6 +1,4 @@
 use cgmath::*;
-use winit::event::*;
-use winit::dpi::PhysicalPosition;
 use instant::Duration;
 
 use crate::input;
