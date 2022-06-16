@@ -20,7 +20,7 @@ pub struct Sprite {
 pub trait DrawSprite<'a> {
     fn draw_sprite(
         &mut self,
-        device: Device,
+        device: &'a Device,
         sprite: &'a Sprite,
         mesh: &'a mut Mesh,
         camera_bind_group: &'a wgpu::BindGroup,
@@ -33,7 +33,7 @@ where
 {
     fn draw_sprite(
         &mut self,
-        device: Device,
+        device: &'b Device,
         sprite: &'b Sprite,
         mesh: &'b mut Mesh,
         camera_bind_group: &'b wgpu::BindGroup,
