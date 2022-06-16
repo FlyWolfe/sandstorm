@@ -84,19 +84,19 @@ fn create_render_pipeline(
 }
 
 pub struct RenderState {
-    surface: wgpu::Surface,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    config: wgpu::SurfaceConfiguration,
+    pub surface: wgpu::Surface,
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
+    pub config: wgpu::SurfaceConfiguration,
     pub size: winit::dpi::PhysicalSize<u32>,
-    clear_color: wgpu::Color,
-    render_pipeline: wgpu::RenderPipeline,
-    camera: camera::Camera,
-    projection: camera::Projection,
+    pub clear_color: wgpu::Color,
+    pub render_pipeline: wgpu::RenderPipeline,
+    pub camera: camera::Camera,
+    pub projection: camera::Projection,
     pub camera_controller: camera::CameraController,
     camera_uniform: CameraUniform,
-    camera_buffer: wgpu::Buffer,
-    camera_bind_group: wgpu::BindGroup,
+    pub camera_buffer: wgpu::Buffer,
+    pub camera_bind_group: wgpu::BindGroup,
 }
 
 impl RenderState {
@@ -278,9 +278,6 @@ impl RenderState {
             });
             
             render_pass.set_pipeline(&self.render_pipeline);
-            /*self.sprites.iter().for_each(|sprite| {
-                render_pass.draw_model(&sprite.model, &self.camera_bind_group);
-            });*/
         }
     
         // submit will accept anything that implements IntoIter
