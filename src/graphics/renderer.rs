@@ -1,5 +1,10 @@
+use std::collections::HashMap;
+use std::hash::Hash;
+
 use cgmath::Vector2;
 use wgpu::Color;
+use wgpu::CommandEncoder;
+use wgpu::Queue;
 use winit::{
     window::Window,
 };
@@ -8,6 +13,9 @@ use wgpu::util::DeviceExt;
 
 use crate::graphics::camera;
 use crate::graphics::mesh;
+
+use super::mesh::Mesh;
+use super::sprite::Sprite;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -100,7 +108,7 @@ pub struct RenderState {
 }
 
 impl RenderState {
-    pub async fn new(window: &Window) -> Self {
+    pub async fn new(window: &Window) -> RenderState {
         let size = window.inner_size();
         
         let instance = wgpu::Instance::new(wgpu::Backends:: all());
@@ -263,6 +271,7 @@ impl RenderState {
         
         // Keep render_pass in scope only when needed, but drop it after end of {} block
         // We can also manually drop it, but this also works
+        // Can't call encoder.finish() until we release the mutable borrow from render_pass, so we need to drop it
         {
             let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                 label: Some("Render Pass"),
@@ -276,10 +285,12 @@ impl RenderState {
                 }],
                 depth_stencil_attachment: None
             });
-            
             render_pass.set_pipeline(&self.render_pipeline);
+            let sprite = Sprite::empty();
+            let mesh = Mesh::empty(&self.device);
+            //render_pass.draw_sprite(&self.device, sprite, mesh, &self.camera_bind_group);
         }
-    
+        
         // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));
         output.present();

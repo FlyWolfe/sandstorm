@@ -1,9 +1,11 @@
 use cgmath::Vector2;
+use cgmath::Zero;
 use cgmath::num_traits::Pow;
 use cgmath::num_traits::ToPrimitive;
 use wgpu::Device;
 use wgpu::util::DeviceExt;
 
+use super::material;
 use super::material::ColorUniform;
 use super::material::Material;
 use super::mesh::Mesh;
@@ -15,6 +17,23 @@ pub struct Sprite {
     pub position: Vector2<f32>,
     pub scale: Vector2<f32>,
     pub material: Material,
+}
+
+impl Sprite {
+    pub fn empty() -> Self {
+        let position = Vector2::zero();
+        let scale = Vector2::new(1f32, 1f32);
+        let material = Material {
+            name: String::from("test"),
+            color: wgpu::Color::GREEN,
+        };
+        
+        Self {
+            position,
+            scale,
+            material,
+        }
+    }
 }
 
 pub trait DrawSprite<'a> {
